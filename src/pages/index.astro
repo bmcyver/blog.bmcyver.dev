@@ -1,199 +1,56 @@
 ---
-import DiscordPresence from '@/components/bento/DiscordPresence'
-import GithubCalendar from '@/components/bento/GithubCalendar'
-import SpotifyPresence from '@/components/bento/SpotifyPresence'
-import WakatimeGraph from '@/components/bento/WakatimeGraph'
+import BlogCard from '@/components/BlogCard.astro'
 import Link from '@/components/Link.astro'
 import PageHead from '@/components/PageHead.astro'
-import TreeBackground from '@/components/TreeBackground.astro'
-import AvatarComponent from '@/components/ui/avatar'
-import { badgeVariants } from '@/components/ui/badge'
+import { buttonVariants } from '@/components/ui/button'
+import { SITE } from '@/consts'
 import Layout from '@/layouts/Layout.astro'
-import { getCombinedReadingTime, parseAuthors } from '@/lib/data-utils'
-import { formatDate } from '@/lib/utils'
-import { Icon } from 'astro-icon/components'
-import { getCollection } from 'astro:content'
+import { getRecentPosts } from '@/lib/data-utils'
 
-const latestPost = await getCollection('blog').then((posts) =>
-  posts
-    .sort(
-      (a, b) =>
-        new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
-    )
-    .filter((post) => import.meta.env.DEV || !post.data.draft)
-    .at(0),
-)
-
-let formattedDate, readTime, authors
-
-if (latestPost) {
-  formattedDate = formatDate(latestPost.data.date)
-  readTime = await getCombinedReadingTime(latestPost.id)
-  authors = await parseAuthors(latestPost.data.authors ?? [])
-}
+const blog = await getRecentPosts(SITE.featuredPostCount)
 ---
 
 <Layout class="max-w-3xl">
   <PageHead slot="head" title="Home" />
-  <section
-    role="list"
-    class="mx-auto grid max-w-[375px] grid-cols-1 gap-4 px-4 [grid-template-areas:'a'_'b'_'c'_'d'_'e'] *:rounded-3xl *:bg-cover *:bg-center *:bg-no-repeat md:max-w-screen-md md:grid-cols-3 md:[grid-template-areas:'a_a_b'_'c_d_d'_'e_e_f']"
-  >
-    <!-- About Me -->
-    <div
-      role="listitem"
-      class="card-base group relative col-span-1 overflow-hidden border [grid-area:a]"
-    >
-      <TreeBackground />
-      <div class="relative flex flex-col space-y-1.5 p-6">
-        <h3 class="text-3xl leading-none font-semibold">Hey, I'm bmcyver!</h3>
+  <section>
+    <div class="rounded-lg border">
+      <div class="flex flex-col space-y-1.5 p-6">
+        <h3 class="text-3xl leading-none font-medium">Hey I'm bmcyver</h3>
       </div>
-      <div class="text-muted-foreground relative p-6 pt-0 text-sm">
-        <p class="mb-2">
-          I'm a student studying <strong>web security</strong> and <strong
-            >binary exploitation</strong
-          >.
+      <div class="p-6 pt-0">
+        <p class="text-muted-foreground mb-2 text-sm">
+          I'm currently studying <strong>web security</strong> and <strong>binary exploitation</strong>.
+          I participate in CTFs as a member of
+          <strong><Link href="https://deadsec.team" class="text-foreground" external underline>DeadSec</Link></strong>.
         </p>
-        <p class="mb-2">
-          Currently, I'm participating in CTFs with the
-          <a href="https://deadsec.team" class="font-semibold hover:underline"
-            >DeadSec</a
-          >
-        </p>
-        <p class="mb-2">
-          I also enjoy playing <strong>Genshin Impact</strong> in my free time.
-        </p>
-        <p class="mt-4">
-          <a
-            href="/about"
-            class="text-primary inline-flex items-center font-medium hover:underline"
-          >
-            Learn more about me
-            <Icon name="lucide:arrow-right" class="ml-1" size={14} />
-          </a>
+        <p class="text-muted-foreground text-sm">
+          I also enjoy playing <strong>Genshin Impact</strong> in my free time. Read more
+          <Link href="/about" class="text-foreground" underline>on the About page</Link>.
         </p>
       </div>
     </div>
-
-    <!-- Discord Activity -->
-    <div
-      role="listitem"
-      class="card-base group relative overflow-hidden border [grid-area:b]"
-    >
-      <TreeBackground size="sm" />
-      <DiscordPresence client:load />
-    </div>
-
-    <!-- Wakatime Graph -->
-    <div
-      role="listitem"
-      class="card-base group relative aspect-[4/3] max-h-[240px] w-full overflow-hidden border [grid-area:c] md:aspect-square"
-    >
-      <TreeBackground size="sm" density="low" />
-      <WakatimeGraph client:load />
-    </div>
-
-    <!-- Github Calendar -->
-    <div
-      role="listitem"
-      class="card-base group relative overflow-hidden border p-4 [grid-area:d]"
-    >
-      <TreeBackground density="medium" />
-      <GithubCalendar client:load />
-    </div>
-
-    <!-- Recent Post -->
-    <div
-      role="listitem"
-      class="card-base group relative overflow-hidden border [grid-area:e] sm:block"
-    >
-      <TreeBackground density="medium" />
+  </section>
+  <section class="flex flex-col gap-y-4">
+    <h2 class="text-2xl font-medium">Latest posts</h2>
+    <ul class="flex flex-col gap-y-4">
       {
-        latestPost && (
-          <div class="relative z-10 flex h-full flex-col p-5 md:p-6">
-            <div class="flex grow flex-col gap-3">
-              <div class="relative">
-                <a
-                  href={`/blog/${latestPost.id}`}
-                  class="group/title focus-visible:ring-primary inline-block rounded-sm hover:underline focus:outline-none focus-visible:ring-2"
-                >
-                  <h4 class="group-hover:text-primary group/title:hover:text-primary line-clamp-2 text-lg leading-snug font-semibold transition-colors md:text-xl">
-                    {latestPost.data.title}
-                  </h4>
-                </a>
-              </div>
-
-              <p class="text-muted-foreground line-clamp-3 min-h-[3.4em] text-sm">
-                {latestPost.data.description}
-              </p>
-
-              <div class="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                {authors && authors.length > 0 && (
-                  <>
-                    {authors.map((author) => (
-                      <span class="flex items-center gap-1">
-                        <AvatarComponent
-                          client:load
-                          src={author.avatar}
-                          alt={author.name}
-                          fallback={author.name[0]}
-                          className="size-4 rounded-full"
-                        />
-                        <span class="max-w-[90px] truncate">{author.name}</span>
-                      </span>
-                    ))}
-                    ·
-                  </>
-                )}
-                <span class="truncate">{formattedDate}</span>·
-                <span class="truncate">{readTime}</span>
-              </div>
-
-              <div class="mt-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex flex-wrap gap-2">
-                  {latestPost.data.tags && (
-                    <>
-                      {latestPost.data.tags.slice(0, 3).map((tag: string) => (
-                        <a
-                          href={`/tags/${tag}`}
-                          class={
-                            badgeVariants({ variant: 'secondary' }) +
-                            ' flex items-center gap-1 px-2 py-0.5 text-xs'
-                          }
-                        >
-                          <Icon name="lucide:hash" class="size-3" />
-                          {tag}
-                        </a>
-                      ))}
-                      {latestPost.data.tags.length > 3 && (
-                        <span class="text-muted-foreground self-center text-xs">
-                          +{latestPost.data.tags.length - 3} more
-                        </span>
-                      )}
-                    </>
-                  )}
-                </div>
-                <Link
-                  href={`/blog/${latestPost.id}`}
-                  class="text-primary hidden items-center gap-1 text-sm font-medium hover:underline md:inline-flex"
-                >
-                  Read more
-                  <Icon name="lucide:arrow-right" class="size-3.5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        )
+        blog.map((post) => (
+          <li>
+            <BlogCard entry={post} />
+          </li>
+        ))
       }
-    </div>
-
-    <!-- Spotify Activity (모바일 숨김) -->
-    <div
-      role="listitem"
-      class="card-base group relative hidden overflow-hidden border [grid-area:f] md:block"
-    >
-      <TreeBackground size="sm" density="low" />
-      <SpotifyPresence client:load />
+    </ul>
+    <div class="flex justify-center">
+      <Link
+        href="/blog"
+        class={buttonVariants({ variant: 'ghost' }) + ' group'}
+      >
+        See all posts <span
+          class="ml-1.5 transition-transform group-hover:translate-x-1"
+          >&rarr;</span
+        >
+      </Link>
     </div>
   </section>
 </Layout>
